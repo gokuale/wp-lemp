@@ -303,49 +303,6 @@ systemctl restart php7.4-fpm; systemctl restart nginx;
 echo 'LEMP Stack has been Installed \nNow downloding latest wordpress'
 sleep 3
 
-cd~
-wget https://wordpress.org/latest.tar.gz
-tar -xzvf latest.tar.gz
-rm latest.tar.gz
-cd wordpress
-mv * /$rootPath
-
-
-
-
-echo "Downloaded latest Wordpress. \n Creating new database for $newdomain"
-sleep 2
-
-db="${newdomain//.}"
-
-mariadb -uroot <<MYSQL_SCRIPT
-CREATE DATABASE db_$db DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-CREATE USER 'user$db'@'localhost' IDENTIFIED BY '$WP_PASSWORD';
-GRANT ALL PRIVILEGES ON db_$db.* TO 'user$db'@'localhost' WITH GRANT OPTION;
-FLUSH PRIVILEGES;
-MYSQL_SCRIPT
-
-#copy the password to the root directory
-
-echo "Root Password is $MYSQL_ROOT_PASSWORD 
-Wordpress Username is user$db
-Wordpress Database Name is db_$db
-Wordpress Password is  $WP_PASSWORD" > ~/passwords_$newdomain.txt
-
-cd /$rootPath
-#create wp config
-cp wp-config-sample.php wp-config.php
-sed -i "s/^.*DB_NAME.*$/define('DB_NAME', 'db_${db}');/" wp-config.php
-sed -i "s/^.*DB_USER.*$/define('DB_USER', 'user${db}');/" wp-config.php
-sed -i "s/^.*DB_PASSWORD.*$/define('DB_PASSWORD', '${WP_PASSWORD}');/" wp-config.php
-
-
-apt-get install ed -y
-
-SALT=$(curl -L https://api.wordpress.org/secret-key/1.1/salt/)
-STRING=$(date +%s+%m|sha256sum|base64|head -c 16)
-printf '%s\n' "g/$STRING/d" a "$SALT" . w | ed -s wp-config.php
-
 
 #Set up logrotate for our Nginx logs
 #Execute the following to create log rotation config for Nginx - this gives you 10 days of logs, rotated daily
